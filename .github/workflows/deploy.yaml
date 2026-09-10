@@ -1,43 +1,24 @@
-name: CD
+name: CD Pipeline
 
 on:
   release:
-    types: [ published ]
+    types: [published]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Install dependencies (build check)
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
-      - name: Build artifact
-        run: |
-          mkdir -p dist
-          tar -czf dist/app-${{ github.ref_name }}.tar.gz app requirements.txt
-
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-build
-          path: dist/
-
   deploy:
-    needs: build
     runs-on: ubuntu-latest
+
     steps:
-      - name: Deploy over SSH
-        uses: appleboy/ssh-action@v1
+      - name: Get release commit SHA
+        id: get_sha
+        run: |
+          RELEASE_TAG=${{ github.event.release.tag_name }}
+          git clone --depth 1 --branch $RELEASE_TAG https://github.com/mzpdqk/catty-reminders-app.git /tmp/repo
+          cd /tmp/repo
+          echo "COMMIT_SHA=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Trigger Deploy on Server
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
@@ -46,13 +27,10 @@ jobs:
           script: |
             set -x
             cd /home/mzpdqk/devops/catty-reminders-app
-            git fetch origin
-            git checkout -B main origin/main
-            git reset --hard origin/main
-            echo "DEPLOY_REF=$(git rev-parse HEAD)" > .env
-            if [ -f requirements.txt ]; then
-              /home/mzpdqk/devops/catty-reminders-app/venv/bin/pip install -q -r requirements.txt
-            fi
+            git fetch --all
+            git reset --hard ${{ steps.get_sha.outputs.COMMIT_SHA }}
+            /home/mzpdqk/devops/catty-reminders-app/venv/bin/pip install -q -r requirements.txt
+            echo "DEPLOY_REF=${{ steps.get_sha.outputs.COMMIT_SHA }}" > .env
             sudo -n systemctl daemon-reload
             sudo -n systemctl restart app.service
-            echo "Deployed $(git rev-parse HEAD)"
+            echo "Deployed ${{ steps.get_sha.outputs.COMMIT_SHA }}"
