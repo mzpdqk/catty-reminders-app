@@ -40,4 +40,5 @@ jobs:
               $IMAGE
 
             docker image prune -f
+
             echo "Deployed ${{ github.sha }}"
