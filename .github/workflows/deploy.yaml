@@ -1,4 +1,4 @@
-name: CD Pipeline
+name: CD
 
 on:
   release:
@@ -7,17 +7,15 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Get release commit SHA
-        id: get_sha
-        run: |
-          RELEASE_TAG=${{ github.event.release.tag_name }}
-          git clone --depth 1 --branch $RELEASE_TAG https://github.com/mzpdqk/catty-reminders-app.git /tmp/repo
-          cd /tmp/repo
-          echo "COMMIT_SHA=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+      - uses: actions/checkout@v4
 
-      - name: Trigger Deploy on Server
+      - name: Prepare image name
+        id: prep
+        run: |
+          echo "repo_lower=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
+      - name: Remote Docker Deploy
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -26,11 +24,20 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           script: |
             set -x
-            cd /home/mzpdqk/devops/catty-reminders-app
-            git fetch --all
-            git reset --hard ${{ steps.get_sha.outputs.COMMIT_SHA }}
-            /home/mzpdqk/devops/catty-reminders-app/venv/bin/pip install -q -r requirements.txt
-            echo "DEPLOY_REF=${{ steps.get_sha.outputs.COMMIT_SHA }}" > .env
-            sudo -n systemctl daemon-reload
-            sudo -n systemctl restart app.service
-            echo "Deployed ${{ steps.get_sha.outputs.COMMIT_SHA }}"
+            IMAGE="ghcr.io/${{ steps.prep.outputs.repo_lower }}:latest"
+            CONTAINER_NAME="catty-container"
+
+            docker pull $IMAGE
+
+            docker stop $CONTAINER_NAME || true
+            docker rm $CONTAINER_NAME || true
+
+            docker run -d \
+              --name $CONTAINER_NAME \
+              -p 8181:8181 \
+              --restart unless-stopped \
+              -e DEPLOY_REF=${{ github.sha }} \
+              $IMAGE
+
+            docker image prune -f
+            echo "Deployed ${{ github.sha }}"
