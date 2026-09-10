@@ -44,15 +44,15 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script: |
+            set -x
             cd /home/mzpdqk/devops/catty-reminders-app
             git fetch origin
             git checkout -B main origin/main
             git reset --hard origin/main
             echo "DEPLOY_REF=$(git rev-parse HEAD)" > .env
             if [ -f requirements.txt ]; then
-              source venv/bin/activate
-              pip install -q -r requirements.txt
+              /home/mzpdqk/devops/catty-reminders-app/venv/bin/pip install -q -r requirements.txt
             fi
-            sudo systemctl daemon-reload
-            sudo systemctl restart app.service
+            sudo -n systemctl daemon-reload
+            sudo -n systemctl restart app.service
             echo "Deployed $(git rev-parse HEAD)"
