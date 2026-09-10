@@ -1,29 +1,36 @@
 #!/bin/bash
 set -e
 
-PROJECT_DIR="/home/mzpdqk/devops/catty-reminders-app"
-BRANCH_NAME=$1
+BRANCH=$1
+APP_DIR="/home/mzpdqk/devops/catty-reminders-app"
 
-if [ -z "$BRANCH_NAME" ]; then
-    echo "❌ No branch specified"
-    exit 1
-fi
+echo "=== Запуск тестов проекта ветки $BRANCH ==="
+cd "$APP_DIR"
 
-echo "🧪 Running tests for branch: $BRANCH_NAME"
+# 1. Подтянуть свежий код (как deploy.sh)
+git fetch origin
+git checkout -B "$BRANCH" "origin/$BRANCH"
+git reset --hard "origin/$BRANCH"
 
-cd "$PROJECT_DIR"
+DEPLOY_REF="$(git rev-parse HEAD)"
+echo "DEPLOY_REF=$DEPLOY_REF" > "$APP_DIR/.env"
+echo "Текущий SHA: $DEPLOY_REF"
 
-# ЗАБИРАЕМ ВСЕ ВЕТКИ (включая новые от GitHub Actions)
-git fetch --all --prune
-git checkout -B "$BRANCH_NAME" "origin/$BRANCH_NAME" 2>/dev/null || git checkout "$BRANCH_NAME"
-git pull origin "$BRANCH_NAME"
-
-if [ ! -d "venv" ]; then
-    python3 -m venv venv
-fi
-
+# 2. Активировать окружение
 source venv/bin/activate
 
-pip install -q -r requirements.txt 2>/dev/null || true
+# 3. Playwright chromium
+echo "=== Устанавливаем Playwright браузер ==="
+playwright install chromium
 
-python3 -m pytest -v --tb=short
+# 4. Убедиться, что app.service отвечает (не убиваем его pkill'ом!)
+if ! curl -s http://127.0.0.1:8181/login > /dev/null 2>&1; then
+    echo "app.service не отвечает, рестартуем"
+    sudo systemctl restart app.service
+    sleep 5
+fi
+
+# 5. Прогнать тесты
+echo "Выполняем тесты..."
+export PYTHONPATH="$APP_DIR:$PYTHONPATH"
+pytest tests --maxfail=1 --disable-warnings -q
