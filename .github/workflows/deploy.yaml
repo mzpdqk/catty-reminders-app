@@ -47,8 +47,7 @@ jobs:
             set -x
             cd /home/mzpdqk/devops/catty-reminders-app
             git fetch origin
-            git checkout -B main origin/main
-            git reset --hard origin/main
+            git reset --hard ${{ github.sha }}
             echo "DEPLOY_REF=$(git rev-parse HEAD)" > .env
             if [ -f requirements.txt ]; then
               /home/mzpdqk/devops/catty-reminders-app/venv/bin/pip install -q -r requirements.txt
