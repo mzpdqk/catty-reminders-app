@@ -7,7 +7,7 @@ Type=simple
 User=mzpdqk
 Group=mzpdqk
 WorkingDirectory=/home/mzpdqk/devops/catty-reminders-app
-Environment="PATH=/home/mzpdqk/devops/catty-reminders-app/venv/bin"
+Environment="PATH=/home/mzpdqk/devops/catty-reminders-app/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 ExecStart=/home/mzpdqk/devops/catty-reminders-app/venv/bin/python3 /home/mzpdqk/devops/catty-reminders-app/webhook/webhook.py
 Restart=always
 RestartSec=5
