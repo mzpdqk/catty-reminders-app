@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-PROJECT_DIR="/home/ubuntu/devops/catty-reminders-app"
+PROJECT_DIR="/home/mzpdqk/devops/catty-reminders-app"
 BRANCH_NAME=$1
 
 if [ -z "$BRANCH_NAME" ]; then

@@ -4,11 +4,11 @@ After=network.target
 
 [Service]
 Type=simple
-User=ubuntu
-Group=ubuntu
-WorkingDirectory=/home/ubuntu/devops/catty-reminders-app
-EnvironmentFile=/home/ubuntu/devops/catty-reminders-app/.env
-ExecStart=/home/ubuntu/devops/catty-reminders-app/venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8181
+User=mzpdqk
+Group=mzpdqk
+WorkingDirectory=/home/mzpdqk/devops/catty-reminders-app
+EnvironmentFile=/home/mzpdqk/devops/catty-reminders-app/.env
+ExecStart=/home/mzpdqk/devops/catty-reminders-app/venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8181
 Restart=always
 RestartSec=5
 

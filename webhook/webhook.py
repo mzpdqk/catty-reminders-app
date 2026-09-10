@@ -6,7 +6,7 @@ from datetime import datetime
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
 PORT = 8080
-WORKSPACE = "/home/ubuntu/devops/catty-reminders-app"
+WORKSPACE = "/home/mzpdqk/devops/catty-reminders-app"
 TEST_SCRIPT = f"{WORKSPACE}/webhook/test.sh"
 DEPLOY_SCRIPT = f"{WORKSPACE}/webhook/deploy.sh"
 

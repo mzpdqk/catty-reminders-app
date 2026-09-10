@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-PROJECT_DIR="/home/ubuntu/devops/catty-reminders-app"
+PROJECT_DIR="/home/mzpdqk/devops/catty-reminders-app"
 TARGET_COMMIT=$1
 
 if [ -z "$TARGET_COMMIT" ]; then
@@ -32,7 +32,7 @@ if [ -f "requirements.txt" ]; then
     pip install -q -r requirements.txt 2>/dev/null || true
 fi
 
-sudo chown ubuntu:ubuntu "$PROJECT_DIR/.env"
+sudo chown mzpdqk:mzpdqk "$PROJECT_DIR/.env"
 chmod 644 "$PROJECT_DIR/.env"
 
 echo "🔄 Restarting service..."
