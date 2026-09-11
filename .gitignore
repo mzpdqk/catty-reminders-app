@@ -48,3 +48,4 @@ local_config.json
 # OS files
 Thumbs.db
 Desktop.ini
+webhook/
