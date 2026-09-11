@@ -36,4 +36,28 @@ jobs:
 
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-            docker compose up -d --pull always --remove-orphans --force-recreate
+            # 1. Убедиться, что db запущен (поднимется, если упал)
+            docker compose up -d db
+
+            # 2. Дождаться готовности db через healthcheck (макс 60 сек)
+            echo "Waiting for db to be healthy..."
+            for i in $(seq 1 60); do
+              STATUS=$(docker inspect --format='{{.State.Health.Status}}' catty-db 2>/dev/null || echo "unknown")
+              if [ "$STATUS" = "healthy" ]; then
+                echo "DB healthy after ${i}s"
+                break
+              fi
+              sleep 1
+            done
+
+            # 3. Pull только app image
+            docker compose pull catty-app
+
+            # 4. Пересоздать ТОЛЬКО app, не трогая db
+            docker compose up -d --no-deps --force-recreate catty-app
+
+            # 5. Показать статус
+            sleep 3
+            docker compose ps
+
+            echo "Deployed ${{ github.sha }}"
